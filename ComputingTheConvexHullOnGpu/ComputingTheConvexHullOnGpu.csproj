@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <None Remove="C:\Users\tisk\.nuget\packages\microsoft.diagnostics.tracing.traceevent\2.0.49\build\..\lib\native\amd64\KernelTraceControl.dll" />
+      <None Remove="C:\Users\tisk\.nuget\packages\microsoft.diagnostics.tracing.traceevent\2.0.49\build\..\lib\native\amd64\msdia140.dll" />
+      <None Remove="C:\Users\tisk\.nuget\packages\microsoft.diagnostics.tracing.traceevent\2.0.49\build\..\lib\native\x86\KernelTraceControl.dll" />
+      <None Remove="C:\Users\tisk\.nuget\packages\microsoft.diagnostics.tracing.traceevent\2.0.49\build\..\lib\native\x86\KernelTraceControl.Win61.dll" />
+      <None Remove="C:\Users\tisk\.nuget\packages\microsoft.diagnostics.tracing.traceevent\2.0.49\build\..\lib\native\x86\msdia140.dll" />
+      <None Update="Assets\points.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+      <PackageReference Include="ILGPU" Version="0.9.0" />
+      <PackageReference Include="ILGPU.Algorithms" Version="0.9.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Assets" />
+    </ItemGroup>
+
+</Project>
