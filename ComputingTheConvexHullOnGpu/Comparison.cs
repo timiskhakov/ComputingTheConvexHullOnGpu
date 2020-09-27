@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using BenchmarkDotNet.Attributes;
 
@@ -15,14 +16,16 @@ namespace ComputingTheConvexHullOnGpu
         [GlobalSetup]
         public void Setup()
         {
-            var file = Path.Combine(Directory.GetCurrentDirectory(), "Assets", "points.txt");
+            var file = Path.Combine(Directory.GetCurrentDirectory(), "Assets", "benchmark-points.txt");
             var lines = File.ReadAllLines(file);
             
             _points = new Point[lines.Length];
             for (var i = 0; i < lines.Length; i++)
             {
                 var parts = lines[i].Split(',');
-                _points[i] = new Point(float.Parse(parts[0]), float.Parse(parts[1]));
+                _points[i] = new Point(
+                    float.Parse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture),
+                    float.Parse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture));
             }
             
             _baseline = new ConvexHull();
