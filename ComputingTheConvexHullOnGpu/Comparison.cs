@@ -22,7 +22,7 @@ namespace ComputingTheConvexHullOnGpu
             for (var i = 0; i < lines.Length; i++)
             {
                 var parts = lines[i].Split(',');
-                _points[i] = new Point(double.Parse(parts[0]), double.Parse(parts[1]));
+                _points[i] = new Point(float.Parse(parts[0]), float.Parse(parts[1]));
             }
             
             _baseline = new ConvexHull();

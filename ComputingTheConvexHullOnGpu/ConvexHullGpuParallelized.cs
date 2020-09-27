@@ -32,7 +32,7 @@ namespace ComputingTheConvexHullOnGpu
             pointsBuffer.CopyFrom(points, 0, 0, points.Length);
             var pointsView = pointsBuffer.View;
             
-            using var distances = accelerator.Allocate<double>(points.Length);
+            using var distances = accelerator.Allocate<float>(points.Length);
             using var maxIndex = accelerator.Allocate<int>(1);
 
             FindHull(points, left, right, 1, result, accelerator, pointsView, distances, maxIndex);
@@ -49,19 +49,19 @@ namespace ComputingTheConvexHullOnGpu
             HashSet<Point> result,
             Accelerator accelerator,
             ArrayView<Point> pointsView,
-            MemoryBuffer<double> distances,
+            MemoryBuffer<float> distances,
             MemoryBuffer<int> maxIndex)
         {
             var distanceKernel = accelerator.LoadAutoGroupedStreamKernel
-                <Index1, ArrayView<Point>, Point, Point, int, ArrayView<double>>(DistanceKernel);
+                <Index1, ArrayView<Point>, Point, Point, int, ArrayView<float>>(DistanceKernel);
             distanceKernel(pointsView.Length, pointsView, p1, p2, side, distances);
             accelerator.Synchronize();
             
-            var maxValue = accelerator.Reduce<double, MaxDouble>(accelerator.DefaultStream, distances);
+            var maxValue = accelerator.Reduce<float, MaxFloat>(accelerator.DefaultStream, distances);
             maxIndex.CopyFrom(-1, 0);
 
             var findMaxIndexKernel = accelerator.LoadAutoGroupedStreamKernel
-                <Index1, ArrayView<double>, double, ArrayView<int>>(FindMaxIndexKernel);
+                <Index1, ArrayView<float>, float, ArrayView<int>>(FindMaxIndexKernel);
             findMaxIndexKernel(distances.Length, distances, maxValue, maxIndex);
             accelerator.Synchronize();
 
@@ -78,21 +78,21 @@ namespace ComputingTheConvexHullOnGpu
             FindHull(points, points[index], p2, newSide, result, accelerator, pointsView, distances, maxIndex);
         }
 
-        private static void DistanceKernel(Index1 i, ArrayView<Point> points, Point p1, Point p2, int side, ArrayView<double> distances)
+        private static void DistanceKernel(Index1 i, ArrayView<Point> points, Point p1, Point p2, int side, ArrayView<float> distances)
         {
             distances[i] = Side(p1, p2, points[i]) == side ? Distance(p1, p2, points[i]) : 0;
         }
 
-        private static void FindMaxIndexKernel(Index1 index, ArrayView<double> distances, double targetValue, ArrayView<int> output)
+        private static void FindMaxIndexKernel(Index1 index, ArrayView<float> distances, float targetValue, ArrayView<int> output)
         {
-            var currValue = distances[index];
-            if (currValue > 0 && currValue == targetValue)
+            var value = distances[index];
+            if (value > 0 && value == targetValue)
             {
                 Atomic.Max(ref output[0], index);
             }
         }
 
-        private static double Distance(Point p1, Point p2, Point p)
+        private static float Distance(Point p1, Point p2, Point p)
         {
             return IntrinsicMath.Abs((p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X)); 
         }

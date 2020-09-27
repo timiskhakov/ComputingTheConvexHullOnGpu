@@ -25,14 +25,14 @@ namespace ComputingTheConvexHullOnGpu.Tests
         [TestMethod]
         public void ReturnsPoints_Input8()
         {
-            CollectionAssert.AreEqual(Data.ExpectedSmall, _convexHull.QuickHull(Data.InputSmall).ToArray());
+            CollectionAssert.AreEquivalent(Data.ExpectedSmall, _convexHull.QuickHull(Data.InputSmall).ToArray());
         }
 
         [TestMethod]
         public void ReturnsPoints_Input200()
         {
             var input = Data.GetLarge().ToArray();
-            CollectionAssert.AreEqual(Data.ExpectedLarge, _convexHull.QuickHull(input).ToArray());
+            CollectionAssert.AreEquivalent(Data.ExpectedLarge, _convexHull.QuickHull(input).ToArray());
         }
     }
 }

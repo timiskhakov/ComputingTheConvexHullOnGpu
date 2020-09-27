@@ -73,4 +73,4 @@ chrome-user-data
 *.iml
 
 # Benchmark data
-ComputingTheConvexHullOnGpu/Assets/points.txt
+ComputingTheConvexHullOnGpu/Assets/benchmark-points.txt

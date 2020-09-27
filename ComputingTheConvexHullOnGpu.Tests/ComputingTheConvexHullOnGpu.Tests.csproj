@@ -18,6 +18,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Assets" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="Assets\200-test-points.txt">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

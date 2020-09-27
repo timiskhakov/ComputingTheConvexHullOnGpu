@@ -65,7 +65,7 @@ namespace ComputingTheConvexHullOnGpu
             FindHull(points, points[maxIndex], p2, newSide, result);
         }
         
-        private static double Distance(Point p1, Point p2, Point p)
+        private static float Distance(Point p1, Point p2, Point p)
         {
             return Math.Abs((p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X)); 
         }
