@@ -21,18 +21,24 @@ namespace ComputingTheConvexHullOnGpu.Tests
         {
             _convexHull.QuickHull(new Point[0]);
         }
-
+        
         [TestMethod]
-        public void ReturnsPoints_Input8()
+        [ExpectedException(typeof(ArgumentException))]
+        public void ThrowsArgumentException_NotEnoughPoints()
         {
-            CollectionAssert.AreEqual(Data.ExpectedSmall, _convexHull.QuickHull(Data.InputSmall).ToArray());
+            _convexHull.QuickHull(Data.TwoPoints);
         }
 
-        [TestMethod]
-        public void ReturnsPoints_Input200()
+        [DataTestMethod]
+        [DataRow("20-input.txt", "20-expected.txt")]
+        [DataRow("200-input.txt", "200-expected.txt")]
+        [DataRow("2000-input.txt", "2000-expected.txt")]
+        public void ReturnsPoints_EnoughPoints(string inputFile, string expectedFile)
         {
-            var input = Data.GetLarge().ToArray();
-            CollectionAssert.AreEqual(Data.ExpectedLarge, _convexHull.QuickHull(input).ToArray());
+            var input = Data.GetPoints(inputFile).ToArray();
+            var expected = Data.GetPoints(expectedFile).ToArray();
+            
+            CollectionAssert.AreEqual(expected, _convexHull.QuickHull(input).ToArray());
         }
     }
 }

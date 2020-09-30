@@ -5,6 +5,7 @@ using ILGPU.Algorithms;
 using ILGPU.Algorithms.ScanReduceOperations;
 using ILGPU.Runtime;
 using ILGPU.Runtime.Cuda;
+using ILGPU.Util;
 
 namespace ComputingTheConvexHullOnGpu
 {
@@ -28,15 +29,11 @@ namespace ComputingTheConvexHullOnGpu
             context.EnableAlgorithms();
             
             using var accelerator = new CudaAccelerator(context);
-            using var pointsBuffer = accelerator.Allocate<Point>(points.Length);
-            pointsBuffer.CopyFrom(points, 0, 0, points.Length);
-            var pointsView = pointsBuffer.View;
+            using var buffer = accelerator.Allocate<Point>(points.Length);
+            buffer.CopyFrom(points, 0, 0, points.Length);
             
-            using var distances = accelerator.Allocate<float>(points.Length);
-            using var maxIndex = accelerator.Allocate<int>(1);
-
-            FindHull(points, left, right, 1, result, accelerator, pointsView, distances, maxIndex);
-            FindHull(points, left, right, -1, result, accelerator, pointsView, distances, maxIndex);
+            FindHull(points, left, right, 1, result, accelerator, buffer.View);
+            FindHull(points, left, right, -1, result, accelerator, buffer.View);
 
             return result;
         }
@@ -48,53 +45,84 @@ namespace ComputingTheConvexHullOnGpu
             int side,
             HashSet<Point> result,
             Accelerator accelerator,
-            ArrayView<Point> pointsView,
-            MemoryBuffer<float> distances,
-            MemoryBuffer<int> maxIndex)
+            ArrayView<Point> view)
         {
-            var distanceKernel = accelerator.LoadAutoGroupedStreamKernel
-                <Index1, ArrayView<Point>, Point, Point, int, ArrayView<float>>(DistanceKernel);
-            distanceKernel(pointsView.Length, pointsView, p1, p2, side, distances);
+            var (gridDim, groupDim) = accelerator.ComputeGridStrideLoopExtent(points.Length, out _);
+            using var output = accelerator.Allocate<DataBlock<float, int>>(gridDim);
+            
+            var kernel = accelerator.LoadStreamKernel<
+                ArrayView<Point>, int, Point, Point, ArrayView<DataBlock<float, int>>>(FindIndexKernel);
+            kernel((gridDim, groupDim), view, side, p1, p2, output);
             accelerator.Synchronize();
             
-            var maxValue = accelerator.Reduce<float, MaxFloat>(accelerator.DefaultStream, distances);
-            maxIndex.CopyFrom(-1, 0);
+            var maxDistance = 0f;
+            var maxIndex = -1;
+            
+            var candidates = output.GetAsArray();
+            foreach (var candidate in candidates)
+            {
+                if (candidate.Item2 < 0) continue;
+                FindMaxIndex(p1, p2, points[candidate.Item2], side, candidate.Item2, ref maxDistance, ref maxIndex);
+            }
 
-            var findMaxIndexKernel = accelerator.LoadAutoGroupedStreamKernel
-                <Index1, ArrayView<float>, float, ArrayView<int>>(FindMaxIndexKernel);
-            findMaxIndexKernel(distances.Length, distances, maxValue, maxIndex);
-            accelerator.Synchronize();
-
-            var index = maxIndex.GetAsArray()[0];
-            if (index == -1) 
-            { 
+            if (maxIndex < 0) 
+            {
                 result.Add(p1); 
                 result.Add(p2); 
                 return;
             }
 
-            var newSide = Side(points[index], p1, p2);
-            FindHull(points, points[index], p1, -newSide, result, accelerator, pointsView, distances, maxIndex); 
-            FindHull(points, points[index], p2, newSide, result, accelerator, pointsView, distances, maxIndex);
+            var newSide = Side(points[maxIndex], p1, p2);
+            FindHull(points, points[maxIndex], p1, -newSide, result, accelerator, view);
+            FindHull(points, points[maxIndex], p2, newSide, result, accelerator, view);
         }
 
-        private static void DistanceKernel(Index1 i, ArrayView<Point> points, Point p1, Point p2, int side, ArrayView<float> distances)
+        private static void FindIndexKernel(
+            ArrayView<Point>input,
+            int side,
+            Point a,
+            Point b,
+            ArrayView<DataBlock<float, int>> output)
         {
-            distances[i] = Side(p1, p2, points[i]) == side ? Distance(p1, p2, points[i]) : 0;
-        }
-
-        private static void FindMaxIndexKernel(Index1 index, ArrayView<float> distances, float targetValue, ArrayView<int> output)
-        {
-            var value = distances[index];
-            if (value > 0 && value == targetValue)
+            var stride = GridExtensions.GridStrideLoopStride;
+            var maxDistance = 0f;
+            var maxIndex = -1;
+            
+            for (var i = Grid.GlobalIndex.X; i < input.Length; i += stride)
             {
-                Atomic.Max(ref output[0], index);
+                FindMaxIndex(a, b, input[i], side, i, ref maxDistance, ref maxIndex);
+            }
+            
+            var maxGroupDistance = GroupExtensions.Reduce<float, MaxFloat>(maxDistance);
+            if (!maxGroupDistance.Equals(maxDistance))
+            {
+                maxIndex = -1;
+            }
+            
+            var maxGroupIndex = GroupExtensions.Reduce<int, MaxInt32>(maxIndex);
+            
+            if (Group.IsFirstThread)
+            {
+                output[Grid.IdxX] = new DataBlock<float, int>(maxGroupDistance, maxGroupIndex);
             }
         }
 
-        private static float Distance(Point p1, Point p2, Point p)
+        private static void FindMaxIndex(
+            Point a,
+            Point b,
+            Point candidatePoint,
+            int side,
+            int candidateIndex,
+            ref float maxDistance,
+            ref int maxIndex)
         {
-            return IntrinsicMath.Abs((p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X)); 
+            if (Side(a, b, candidatePoint) != side) return;
+            
+            var candidateDistance = Distance(a, b, candidatePoint);
+            if (candidateDistance <= maxDistance) return;
+            
+            maxDistance = candidateDistance;
+            maxIndex = candidateIndex;
         }
         
         private static int Side(Point p1, Point p2, Point p) 
@@ -103,6 +131,11 @@ namespace ComputingTheConvexHullOnGpu
             if (side > 0) return 1; 
             if (side < 0) return -1; 
             return 0; 
+        }
+        
+        private static float Distance(Point a, Point b, Point p)
+        {
+            return IntrinsicMath.Abs((p.Y - a.Y) * (b.X - a.X) - (b.Y - a.Y) * (p.X - a.X)); 
         }
     }
 }
