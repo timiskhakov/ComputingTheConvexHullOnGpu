@@ -48,21 +48,21 @@ namespace ComputingTheConvexHullOnGpu
             ArrayView<Point> view)
         {
             var (gridDim, groupDim) = accelerator.ComputeGridStrideLoopExtent(points.Length, out _);
-            using var output = accelerator.Allocate<DataBlock<float, int>>(gridDim);
+            using var output = accelerator.Allocate<DataBlock<int, float>>(gridDim);
             
             var kernel = accelerator.LoadStreamKernel<
-                ArrayView<Point>, int, Point, Point, ArrayView<DataBlock<float, int>>>(FindIndexKernel);
-            kernel((gridDim, groupDim), view, side, p1, p2, output);
+                ArrayView<Point>, int, Point, Point, ArrayView<DataBlock<int, float>>>(FindMaxIndexKernel);
+            kernel(new KernelConfig(gridDim, groupDim), view, side, p1, p2, output);
             accelerator.Synchronize();
             
-            var maxDistance = 0f;
             var maxIndex = -1;
-            
+            var maxDistance = 0f;
+
             var candidates = output.GetAsArray();
             foreach (var candidate in candidates)
             {
-                if (candidate.Item2 < 0) continue;
-                FindMaxIndex(p1, p2, points[candidate.Item2], side, candidate.Item2, ref maxDistance, ref maxIndex);
+                if (candidate.Item1 < 0) continue;
+                FindMaxIndex(p1, p2, points[candidate.Item1], side, candidate.Item1, ref maxIndex, ref maxDistance);
             }
 
             if (maxIndex < 0) 
@@ -77,24 +77,24 @@ namespace ComputingTheConvexHullOnGpu
             FindHull(points, points[maxIndex], p2, newSide, result, accelerator, view);
         }
 
-        private static void FindIndexKernel(
-            ArrayView<Point>input,
+        private static void FindMaxIndexKernel(
+            ArrayView<Point> input,
             int side,
             Point a,
             Point b,
-            ArrayView<DataBlock<float, int>> output)
+            ArrayView<DataBlock<int, float>> output)
         {
             var stride = GridExtensions.GridStrideLoopStride;
-            var maxDistance = 0f;
             var maxIndex = -1;
-            
+            var maxDistance = 0f;
+
             for (var i = Grid.GlobalIndex.X; i < input.Length; i += stride)
             {
-                FindMaxIndex(a, b, input[i], side, i, ref maxDistance, ref maxIndex);
+                FindMaxIndex(a, b, input[i], side, i, ref maxIndex, ref maxDistance);
             }
             
             var maxGroupDistance = GroupExtensions.Reduce<float, MaxFloat>(maxDistance);
-            if (!maxGroupDistance.Equals(maxDistance))
+            if (!maxDistance.Equals(maxGroupDistance))
             {
                 maxIndex = -1;
             }
@@ -103,7 +103,7 @@ namespace ComputingTheConvexHullOnGpu
             
             if (Group.IsFirstThread)
             {
-                output[Grid.IdxX] = new DataBlock<float, int>(maxGroupDistance, maxGroupIndex);
+                output[Grid.IdxX] = new DataBlock<int, float>(maxGroupIndex, maxGroupDistance);
             }
         }
 
@@ -113,16 +113,16 @@ namespace ComputingTheConvexHullOnGpu
             Point candidatePoint,
             int side,
             int candidateIndex,
-            ref float maxDistance,
-            ref int maxIndex)
+            ref int maxIndex,
+            ref float maxDistance)
         {
             if (Side(a, b, candidatePoint) != side) return;
             
             var candidateDistance = Distance(a, b, candidatePoint);
             if (candidateDistance <= maxDistance) return;
             
-            maxDistance = candidateDistance;
             maxIndex = candidateIndex;
+            maxDistance = candidateDistance;
         }
         
         private static int Side(Point p1, Point p2, Point p) 

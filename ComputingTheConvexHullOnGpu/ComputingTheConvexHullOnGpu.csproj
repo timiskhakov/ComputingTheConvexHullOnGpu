@@ -14,16 +14,15 @@
       <None Update="Assets\benchmark-points.txt">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="Assets\200-input.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
       <PackageReference Include="ILGPU" Version="0.9.0" />
       <PackageReference Include="ILGPU.Algorithms" Version="0.9.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Assets" />
     </ItemGroup>
 
 </Project>
