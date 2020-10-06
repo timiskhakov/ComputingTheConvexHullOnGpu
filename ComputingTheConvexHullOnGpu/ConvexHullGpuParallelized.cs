@@ -85,21 +85,21 @@ namespace ComputingTheConvexHullOnGpu
             ArrayView<DataBlock<int, float>> output)
         {
             var stride = GridExtensions.GridStrideLoopStride;
-            var maxIndex = -1;
-            var maxDistance = 0f;
+            var index = -1;
+            var distance = 0f;
 
             for (var i = Grid.GlobalIndex.X; i < input.Length; i += stride)
             {
-                FindMaxIndex(a, b, input[i], side, i, ref maxIndex, ref maxDistance);
+                FindMaxIndex(a, b, input[i], side, i, ref index, ref distance);
             }
             
-            var maxGroupDistance = GroupExtensions.Reduce<float, MaxFloat>(maxDistance);
-            if (!maxDistance.Equals(maxGroupDistance))
+            var maxGroupDistance = GroupExtensions.Reduce<float, MaxFloat>(distance);
+            if (!distance.Equals(maxGroupDistance))
             {
-                maxIndex = -1;
+                index = -1;
             }
             
-            var maxGroupIndex = GroupExtensions.Reduce<int, MaxInt32>(maxIndex);
+            var maxGroupIndex = GroupExtensions.Reduce<int, MaxInt32>(index);
             
             if (Group.IsFirstThread)
             {

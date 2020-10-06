@@ -28,7 +28,7 @@ namespace ComputingTheConvexHullOnGpu
         private static void FindHull(Point[] points, Point p1, Point p2, int side, HashSet<Point> result)
         {
             var maxIndex = -1;
-            var maxDistance = 0d;
+            var maxDistance = 0f;
             for (var i = 0; i < points.Length; i++)
             {
                 if (Side(p1, p2, points[i]) != side) continue;
