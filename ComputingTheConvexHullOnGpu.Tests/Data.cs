@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using ComputingTheConvexHullOnGpu.Models;
+using ComputingTheConvexHullOnGpu.Soa;
 
 namespace ComputingTheConvexHullOnGpu.Tests
 {

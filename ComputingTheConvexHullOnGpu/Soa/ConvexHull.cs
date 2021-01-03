@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using ComputingTheConvexHullOnGpu.Models;
 
-namespace ComputingTheConvexHullOnGpu
+namespace ComputingTheConvexHullOnGpu.Soa
 {
-    public class ConvexHullCpuParallelized : IConvexHull
+    public class ConvexHull : IConvexHull
     {
         public HashSet<Point> QuickHull(Point[] points)
         {
@@ -26,32 +26,20 @@ namespace ComputingTheConvexHullOnGpu
             return result;
         }
 
-        private static readonly object Lock = new object();
         private static void FindHull(Point[] points, Point p1, Point p2, int side, HashSet<Point> result)
         {
             var maxIndex = -1;
-            Parallel.For(0, points.Length, () => -1,
-                (i, _, localMaxIndex) =>
-                {
-                    if (Side(p1, p2, points[i]) != side) return localMaxIndex;
-                    
-                    var distance = localMaxIndex == -1 ? 0 : Distance(p1, p2, points[localMaxIndex]);
-                    if (Distance(p1, p2, points[i]) <= distance) return localMaxIndex;
-                    
-                    return i;
-                },
-                localMaxIndex =>
-                {
-                    lock (Lock)
-                    {
-                        if (localMaxIndex == -1) return;
-                        var maxDistance = maxIndex != -1 ? Distance(p1, p2, points[maxIndex]) : 0;
-                        if (maxDistance < Distance(p1, p2, points[localMaxIndex]))
-                        {
-                            maxIndex = localMaxIndex;
-                        }   
-                    }
-                });
+            var maxDistance = 0f;
+            for (var i = 0; i < points.Length; i++)
+            {
+                if (Side(p1, p2, points[i]) != side) continue;
+                
+                var distance = Distance(p1, p2, points[i]);
+                if (distance <= maxDistance) continue;
+                
+                maxIndex = i; 
+                maxDistance = distance;
+            } 
             
             if (maxIndex == -1) 
             { 
@@ -65,8 +53,8 @@ namespace ComputingTheConvexHullOnGpu
             FindHull(points, points[maxIndex], p2, newSide, result);
         }
         
-        private static float Distance(Point p1, Point p2, Point p)
-        {
+        private static float Distance(Point p1, Point p2, Point p) 
+        { 
             return Math.Abs((p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X)); 
         }
         

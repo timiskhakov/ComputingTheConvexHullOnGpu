@@ -1,4 +1,4 @@
-namespace ComputingTheConvexHullOnGpu
+namespace ComputingTheConvexHullOnGpu.Models
 {
     public readonly struct Point
     {

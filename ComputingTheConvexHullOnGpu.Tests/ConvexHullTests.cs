@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using ComputingTheConvexHullOnGpu.Models;
+using ComputingTheConvexHullOnGpu.Soa;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ComputingTheConvexHullOnGpu.Tests

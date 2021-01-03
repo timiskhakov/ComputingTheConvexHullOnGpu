@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.IO;
 using BenchmarkDotNet.Attributes;
+using ComputingTheConvexHullOnGpu.Aos;
+using ComputingTheConvexHullOnGpu.Models;
+using ComputingTheConvexHullOnGpu.Soa;
 
 namespace ComputingTheConvexHullOnGpu
 {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ComputingTheConvexHullOnGpu.Models;
 using ILGPU;
 using ILGPU.Algorithms;
 using ILGPU.Algorithms.ScanReduceOperations;
@@ -7,7 +8,7 @@ using ILGPU.Runtime;
 using ILGPU.Runtime.Cuda;
 using ILGPU.Util;
 
-namespace ComputingTheConvexHullOnGpu
+namespace ComputingTheConvexHullOnGpu.Soa
 {
     public class ConvexHullGpuParallelized : IConvexHull
     {

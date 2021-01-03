@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using ComputingTheConvexHullOnGpu.Models;
+using ComputingTheConvexHullOnGpu.Soa;
 
-namespace ComputingTheConvexHullOnGpu
+namespace ComputingTheConvexHullOnGpu.Aos
 {
     public class ConvexHullIntrinsics : IConvexHull
     {
@@ -14,7 +16,7 @@ namespace ComputingTheConvexHullOnGpu
         {
             if (points.Length <= 2) throw new ArgumentException($"Too little points: {points.Length}, expected 3 or more");
 
-            var soa = new PointsSoa(points.Length);
+            var soa = new Points(points.Length);
             var result = new HashSet<Point>();
 
             var left = points[0];
@@ -41,7 +43,7 @@ namespace ComputingTheConvexHullOnGpu
             Point p2,
             float side,
             HashSet<Point> result,
-            ref PointsSoa soa)
+            ref Points soa)
         {
             var maxIndex = -1;
             var maxDistance = 0f;
@@ -110,17 +112,5 @@ namespace ComputingTheConvexHullOnGpu
         { 
             return (p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X);
         }
-
-        private readonly struct PointsSoa
-        {
-            internal float[] Xs { get; }
-            internal float[] Ys { get; }
-
-            public PointsSoa(int length)
-            {
-                Xs = new float[length];
-                Ys = new float[length];
-            }
-        } 
     }
 }

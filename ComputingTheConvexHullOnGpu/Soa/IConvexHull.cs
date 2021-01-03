@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using ComputingTheConvexHullOnGpu.Models;
 
-namespace ComputingTheConvexHullOnGpu
+namespace ComputingTheConvexHullOnGpu.Soa
 {
     public interface IConvexHull
     {
