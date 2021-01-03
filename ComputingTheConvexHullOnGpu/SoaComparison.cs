@@ -8,7 +8,7 @@ using ComputingTheConvexHullOnGpu.Soa;
 namespace ComputingTheConvexHullOnGpu
 {
     [MemoryDiagnoser]
-    public class Comparison
+    public class SoaComparison
     {
         private Point[] _points;
         
