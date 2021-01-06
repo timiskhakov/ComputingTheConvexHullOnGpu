@@ -9,26 +9,18 @@ namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
     [TestClass]
     public class ConvexHullGpuParallelizedTests
     {
-        private ConvexHullGpuParallelized _convexHullGpuParallelized;
-
-        [TestInitialize]
-        public void Setup()
-        {
-            _convexHullGpuParallelized = new ConvexHullGpuParallelized();
-        }
-        
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_ZeroPoints()
         {
-            _convexHullGpuParallelized.QuickHull(new Point[0]);
+            ConvexHullGpuParallelized.QuickHull(new Point[0]);
         }
         
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_NotEnoughPoints()
         {
-            _convexHullGpuParallelized.QuickHull(Data.TwoSoaPoints);
+            ConvexHullGpuParallelized.QuickHull(Data.TwoSoaPoints);
         }
 
         [DataTestMethod]
@@ -40,7 +32,7 @@ namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
             var input = Data.GetSoaPoints(inputFile).ToArray();
             var expected = Data.GetSoaPoints(expectedFile).ToArray();
             
-            CollectionAssert.AreEqual(expected, _convexHullGpuParallelized.QuickHull(input).ToArray());
+            CollectionAssert.AreEqual(expected, ConvexHullGpuParallelized.QuickHull(input).ToArray());
         }
     }
 }

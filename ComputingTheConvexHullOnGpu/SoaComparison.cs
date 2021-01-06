@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.IO;
 using BenchmarkDotNet.Attributes;
-using ComputingTheConvexHullOnGpu.Aos;
 using ComputingTheConvexHullOnGpu.Models;
 using ComputingTheConvexHullOnGpu.Soa;
 
@@ -12,10 +11,6 @@ namespace ComputingTheConvexHullOnGpu
     {
         private Point[] _points;
         
-        private ConvexHull _convexHull;
-        private ConvexHullCpuParallelized _convexHullCpuParallelized;
-        private ConvexHullGpuParallelized _convexHullGpuParallelized;
-
         [GlobalSetup]
         public void Setup()
         {
@@ -30,28 +25,24 @@ namespace ComputingTheConvexHullOnGpu
                     float.Parse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture),
                     float.Parse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture));
             }
-            
-            _convexHull = new ConvexHull();
-            _convexHullCpuParallelized = new ConvexHullCpuParallelized();
-            _convexHullGpuParallelized = new ConvexHullGpuParallelized();
         }
         
         [Benchmark]
         public void Baseline()
         {
-            _convexHull.QuickHull(_points);
+            ConvexHull.QuickHull(_points);
         }
         
         [Benchmark]
         public void CpuParallelized()
         {
-            _convexHullCpuParallelized.QuickHull(_points);
+            ConvexHullCpuParallelized.QuickHull(_points);
         }
 
         [Benchmark]
         public void GpuParallelized()
         {
-            _convexHullGpuParallelized.QuickHull(_points);
+            ConvexHullGpuParallelized.QuickHull(_points);
         }
     }
 }

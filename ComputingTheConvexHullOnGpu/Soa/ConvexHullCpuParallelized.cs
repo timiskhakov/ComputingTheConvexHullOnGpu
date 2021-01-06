@@ -5,9 +5,9 @@ using ComputingTheConvexHullOnGpu.Models;
 
 namespace ComputingTheConvexHullOnGpu.Soa
 {
-    public class ConvexHullCpuParallelized
+    public static class ConvexHullCpuParallelized
     {
-        public HashSet<Point> QuickHull(Point[] points)
+        public static HashSet<Point> QuickHull(Point[] points)
         {
             if (points.Length <= 2) throw new ArgumentException($"Too little points: {points.Length}, expected 3 or more");
 
