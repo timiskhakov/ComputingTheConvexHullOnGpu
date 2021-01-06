@@ -9,7 +9,7 @@ namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
     [TestClass]
     public class ConvexHullTests
     {
-        private IConvexHull _convexHull;
+        private ConvexHull _convexHull;
 
         [TestInitialize]
         public void Setup()

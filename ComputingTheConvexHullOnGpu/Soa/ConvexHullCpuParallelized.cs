@@ -5,7 +5,7 @@ using ComputingTheConvexHullOnGpu.Models;
 
 namespace ComputingTheConvexHullOnGpu.Soa
 {
-    public class ConvexHullCpuParallelized : IConvexHull
+    public class ConvexHullCpuParallelized
     {
         public HashSet<Point> QuickHull(Point[] points)
         {

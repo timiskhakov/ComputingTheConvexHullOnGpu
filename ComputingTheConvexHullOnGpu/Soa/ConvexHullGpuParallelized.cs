@@ -10,7 +10,7 @@ using ILGPU.Util;
 
 namespace ComputingTheConvexHullOnGpu.Soa
 {
-    public class ConvexHullGpuParallelized : IConvexHull
+    public class ConvexHullGpuParallelized
     {
         public HashSet<Point> QuickHull(Point[] points)
         {
