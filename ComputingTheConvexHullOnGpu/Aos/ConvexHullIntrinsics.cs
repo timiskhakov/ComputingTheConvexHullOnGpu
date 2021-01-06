@@ -3,47 +3,41 @@ using System.Collections.Generic;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using ComputingTheConvexHullOnGpu.Models;
-using ComputingTheConvexHullOnGpu.Soa;
 
 namespace ComputingTheConvexHullOnGpu.Aos
 {
-    public class ConvexHullIntrinsics : IConvexHull
+    public class ConvexHullIntrinsics
     {
         private static readonly int BlockSize = Vector256<float>.Count;
         private static readonly Vector256<float> Zeros = Vector256.Create(0f);
         
-        public HashSet<Point> QuickHull(Point[] points)
+        public HashSet<Point> QuickHull(Points points)
         {
-            if (points.Length <= 2) throw new ArgumentException($"Too little points: {points.Length}, expected 3 or more");
+            if (points.Xs.Length != points.Ys.Length) throw new ArgumentException($"Invalid {nameof(Points)} structure");
+            if (points.Xs.Length <= 2) throw new ArgumentException($"Too little points: {points.Xs.Length}, expected 3 or more");
 
-            var soa = new Points(points.Length);
             var result = new HashSet<Point>();
 
-            var left = points[0];
-            var right = points[0];
-            for (var i = 0; i < points.Length; i++)
+            var left = new Point(points.Xs[0], points.Ys[0]);
+            var right = new Point(points.Xs[0], points.Ys[0]);
+            for (var i = 0; i < points.Xs.Length; i++)
             {
-                soa.Xs[i] = points[i].X;
-                soa.Ys[i] = points[i].Y;
-                
-                if (points[i].X < left.X) left = points[i];
-                if (points[i].X > right.X) right = points[i];
+                if (points.Xs[i] < left.X) left = new Point(points.Xs[i], points.Ys[i]);
+                if (points.Xs[i] > right.X) right = new Point(points.Xs[i], points.Ys[i]);
             }
 
-            FindHull(points, left, right, 1, result, ref soa);
-            FindHull(points, left, right, -1, result, ref soa);
+            FindHull(in points, left, right, 1, result);
+            FindHull(in points, left, right, -1, result);
 
             return result;
         }
 
-        // I'm not sure this is the best implementation
         private static unsafe void FindHull(
-            Point[] points,
+            in Points points,
             Point p1,
             Point p2,
             float side,
-            HashSet<Point> result,
-            ref Points soa)
+            HashSet<Point> result)
         {
             var maxIndex = -1;
             var maxDistance = 0f;
@@ -54,10 +48,10 @@ namespace ComputingTheConvexHullOnGpu.Aos
             var p2Y = Vector256.Create(p2.Y);
 
             var i = 0;
-            fixed (float* pXs = soa.Xs)
-            fixed (float* pYs = soa.Ys)
+            fixed (float* pXs = points.Xs)
+            fixed (float* pYs = points.Ys)
             {
-                for (; i < soa.Xs.Length - BlockSize; i += BlockSize)
+                for (; i < points.Xs.Length - BlockSize; i += BlockSize)
                 {
                     var pX = Avx.LoadVector256(pXs + i);
                     var pY = Avx.LoadVector256(pYs + i);
@@ -87,9 +81,9 @@ namespace ComputingTheConvexHullOnGpu.Aos
                 }
             }
 
-            for (; i < soa.Xs.Length; i++)
+            for (; i < points.Xs.Length; i++)
             {
-                var distance = Distance(p1, p2, points[i]);
+                var distance = Distance(p1, p2, new Point(points.Xs[i], points.Ys[i]));
                 if (side > 0 && distance > maxDistance || side < 0 && distance < maxDistance)
                 {
                     maxIndex = i;
@@ -104,8 +98,10 @@ namespace ComputingTheConvexHullOnGpu.Aos
                 return;
             }
 
-            FindHull(points, points[maxIndex], p1, -maxDistance, result, ref soa); 
-            FindHull(points, points[maxIndex], p2, maxDistance, result, ref soa);
+            var maxIndexPoint = new Point(points.Xs[maxIndex], points.Ys[maxIndex]);
+            
+            FindHull(in points, maxIndexPoint, p1, -maxDistance, result); 
+            FindHull(in points, maxIndexPoint, p2, maxDistance, result);
         }
 
         private static float Distance(Point p1, Point p2, Point p) 

@@ -28,7 +28,7 @@ namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_NotEnoughPoints()
         {
-            _convexHull.QuickHull(Data.TwoPoints);
+            _convexHull.QuickHull(Data.TwoSoaPoints);
         }
 
         [DataTestMethod]
@@ -37,8 +37,8 @@ namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
         [DataRow("2000-input.txt", "2000-expected.txt")]
         public void ReturnsPoints_EnoughPoints(string inputFile, string expectedFile)
         {
-            var input = Data.GetPoints(inputFile).ToArray();
-            var expected = Data.GetPoints(expectedFile).ToArray();
+            var input = Data.GetSoaPoints(inputFile).ToArray();
+            var expected = Data.GetSoaPoints(expectedFile).ToArray();
             
             CollectionAssert.AreEqual(expected, _convexHull.QuickHull(input).ToArray());
         }

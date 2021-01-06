@@ -14,7 +14,6 @@ namespace ComputingTheConvexHullOnGpu
         
         private IConvexHull _baseline;
         private IConvexHull _cpuParallelized;
-        private IConvexHull _cpuIntrinsics;
         private IConvexHull _gpuParallelized;
 
         [GlobalSetup]
@@ -34,7 +33,6 @@ namespace ComputingTheConvexHullOnGpu
             
             _baseline = new ConvexHull();
             _cpuParallelized = new ConvexHullCpuParallelized();
-            _cpuIntrinsics = new ConvexHullIntrinsics();
             _gpuParallelized = new ConvexHullGpuParallelized();
         }
         
@@ -49,13 +47,7 @@ namespace ComputingTheConvexHullOnGpu
         {
             _cpuParallelized.QuickHull(_points);
         }
-        
-        [Benchmark]
-        public void CpuIntrinsics()
-        {
-            _cpuIntrinsics.QuickHull(_points);
-        }
-        
+
         [Benchmark]
         public void GpuParallelized()
         {

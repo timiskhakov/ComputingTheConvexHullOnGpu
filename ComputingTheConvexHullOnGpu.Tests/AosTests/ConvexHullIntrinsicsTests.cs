@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
 using ComputingTheConvexHullOnGpu.Aos;
-using ComputingTheConvexHullOnGpu.Models;
-using ComputingTheConvexHullOnGpu.Soa;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ComputingTheConvexHullOnGpu.Tests.AosTests
@@ -10,7 +8,7 @@ namespace ComputingTheConvexHullOnGpu.Tests.AosTests
     [TestClass]
     public class ConvexHullIntrinsicsTests
     {
-        private IConvexHull _convexHull;
+        private ConvexHullIntrinsics _convexHull;
 
         [TestInitialize]
         public void Setup()
@@ -22,14 +20,14 @@ namespace ComputingTheConvexHullOnGpu.Tests.AosTests
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_ZeroPoints()
         {
-            _convexHull.QuickHull(new Point[0]);
+            _convexHull.QuickHull(new Points(0));
         }
         
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_NotEnoughPoints()
         {
-            _convexHull.QuickHull(Data.TwoPoints);
+            _convexHull.QuickHull(Data.GetTwoAosPoints());
         }
 
         [DataTestMethod]
@@ -38,9 +36,8 @@ namespace ComputingTheConvexHullOnGpu.Tests.AosTests
         [DataRow("2000-input.txt", "2000-expected.txt")]
         public void ReturnsPoints_EnoughPoints(string inputFile, string expectedFile)
         {
-            var input = Data.GetPoints(inputFile).ToArray();
-            var expected = Data.GetPoints(expectedFile).ToArray();
-            var actual = _convexHull.QuickHull(input).ToArray();
+            var input = Data.GetAosPoints(inputFile);
+            var expected = Data.GetSoaPoints(expectedFile).ToArray();
             
             CollectionAssert.AreEqual(expected, _convexHull.QuickHull(input).ToArray());
         }
