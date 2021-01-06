@@ -1,20 +1,21 @@
-using System;
+﻿using System;
 using System.Linq;
+using ComputingTheConvexHullOnGpu.Aos;
 using ComputingTheConvexHullOnGpu.Models;
 using ComputingTheConvexHullOnGpu.Soa;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ComputingTheConvexHullOnGpu.Tests
+namespace ComputingTheConvexHullOnGpu.Tests.AosTests
 {
     [TestClass]
-    public class ConvexHullCpuParallelizedTests
+    public class ConvexHullIntrinsicsTests
     {
         private IConvexHull _convexHull;
 
         [TestInitialize]
         public void Setup()
         {
-            _convexHull = new ConvexHullCpuParallelized();
+            _convexHull = new ConvexHullIntrinsics();
         }
         
         [TestMethod]
@@ -39,6 +40,7 @@ namespace ComputingTheConvexHullOnGpu.Tests
         {
             var input = Data.GetPoints(inputFile).ToArray();
             var expected = Data.GetPoints(expectedFile).ToArray();
+            var actual = _convexHull.QuickHull(input).ToArray();
             
             CollectionAssert.AreEqual(expected, _convexHull.QuickHull(input).ToArray());
         }

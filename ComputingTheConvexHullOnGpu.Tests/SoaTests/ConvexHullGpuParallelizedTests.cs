@@ -4,7 +4,7 @@ using ComputingTheConvexHullOnGpu.Models;
 using ComputingTheConvexHullOnGpu.Soa;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ComputingTheConvexHullOnGpu.Tests
+namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
 {
     [TestClass]
     public class ConvexHullGpuParallelizedTests

@@ -4,7 +4,7 @@ using ComputingTheConvexHullOnGpu.Models;
 using ComputingTheConvexHullOnGpu.Soa;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ComputingTheConvexHullOnGpu.Tests
+namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
 {
     [TestClass]
     public class ConvexHullTests
@@ -21,7 +21,7 @@ namespace ComputingTheConvexHullOnGpu.Tests
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_ZeroPoints()
         {
-            _convexHull.QuickHull(new Point[0]);
+            _convexHull.QuickHull(Array.Empty<Point>());
         }
         
         [TestMethod]
