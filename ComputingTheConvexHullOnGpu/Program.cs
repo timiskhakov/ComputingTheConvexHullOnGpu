@@ -6,7 +6,8 @@ namespace ComputingTheConvexHullOnGpu
     {
         private static void Main()
         {
-            BenchmarkRunner.Run<SoaComparison>();
+            //BenchmarkRunner.Run<SoaComparison>();
+            BenchmarkRunner.Run<AosComparison>();
         }
     }
 }

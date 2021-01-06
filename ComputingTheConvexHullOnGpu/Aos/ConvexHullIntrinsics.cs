@@ -6,12 +6,12 @@ using ComputingTheConvexHullOnGpu.Models;
 
 namespace ComputingTheConvexHullOnGpu.Aos
 {
-    public class ConvexHullIntrinsics
+    public static class ConvexHullIntrinsics
     {
         private static readonly int BlockSize = Vector256<float>.Count;
         private static readonly Vector256<float> Zeros = Vector256.Create(0f);
         
-        public HashSet<Point> QuickHull(Points points)
+        public static HashSet<Point> QuickHull(Points points)
         {
             if (points.Xs.Length != points.Ys.Length) throw new ArgumentException($"Invalid {nameof(Points)} structure");
             if (points.Xs.Length <= 2) throw new ArgumentException($"Too little points: {points.Xs.Length}, expected 3 or more");

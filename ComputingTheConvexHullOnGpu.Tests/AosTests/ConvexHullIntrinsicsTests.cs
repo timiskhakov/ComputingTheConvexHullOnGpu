@@ -8,26 +8,18 @@ namespace ComputingTheConvexHullOnGpu.Tests.AosTests
     [TestClass]
     public class ConvexHullIntrinsicsTests
     {
-        private ConvexHullIntrinsics _convexHull;
-
-        [TestInitialize]
-        public void Setup()
-        {
-            _convexHull = new ConvexHullIntrinsics();
-        }
-        
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_ZeroPoints()
         {
-            _convexHull.QuickHull(new Points(0));
+            ConvexHullIntrinsics.QuickHull(new Points(0));
         }
         
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_NotEnoughPoints()
         {
-            _convexHull.QuickHull(Data.GetTwoAosPoints());
+            ConvexHullIntrinsics.QuickHull(Data.GetTwoAosPoints());
         }
 
         [DataTestMethod]
@@ -39,7 +31,7 @@ namespace ComputingTheConvexHullOnGpu.Tests.AosTests
             var input = Data.GetAosPoints(inputFile);
             var expected = Data.GetSoaPoints(expectedFile).ToArray();
             
-            CollectionAssert.AreEqual(expected, _convexHull.QuickHull(input).ToArray());
+            CollectionAssert.AreEqual(expected, ConvexHullIntrinsics.QuickHull(input).ToArray());
         }
     }
 }
