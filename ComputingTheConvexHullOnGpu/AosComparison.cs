@@ -31,5 +31,11 @@ namespace ComputingTheConvexHullOnGpu
         {
             ConvexHullIntrinsics.QuickHull(_points);
         }
+        
+        [Benchmark]
+        public void Gpu()
+        {
+            ConvexHullGpuParallelized.QuickHull(_points);
+        }
     }
 }
