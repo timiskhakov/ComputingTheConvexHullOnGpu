@@ -18,34 +18,44 @@ namespace ComputingTheConvexHullOnGpu.Aos
 
             var result = new HashSet<Point>();
 
-            var left = new Point(points.Xs[0], points.Ys[0]);
-            var right = new Point(points.Xs[0], points.Ys[0]);
+            var left = (points.Xs[0], points.Ys[0]);
+            var right = (points.Xs[0], points.Ys[0]);
             for (var i = 0; i < points.Xs.Length; i++)
             {
-                if (points.Xs[i] < left.X) left = new Point(points.Xs[i], points.Ys[i]);
-                if (points.Xs[i] > right.X) right = new Point(points.Xs[i], points.Ys[i]);
+                if (points.Xs[i] < left.Item1)
+                {
+                    left.Item1 = points.Xs[i];
+                    left.Item2 = points.Ys[i];
+                }
+                if (points.Xs[i] > right.Item1)
+                {
+                    right.Item1 = points.Xs[i];
+                    right.Item2 = points.Ys[i];
+                }
             }
 
-            FindHull(in points, left, right, 1, result);
-            FindHull(in points, left, right, -1, result);
+            FindHull(in points, left.Item1, left.Item2, right.Item1, right.Item2, 1, result);
+            FindHull(in points, left.Item1, left.Item2, right.Item1, right.Item2, -1, result);
 
             return result;
         }
 
         private static unsafe void FindHull(
             in Points points,
-            Point p1,
-            Point p2,
+            float aX,
+            float aY,
+            float bX,
+            float bY,
             float side,
             HashSet<Point> result)
         {
             var maxIndex = -1;
             var maxDistance = 0f;
 
-            var p1X = Vector256.Create(p1.X);
-            var p1Y = Vector256.Create(p1.Y);
-            var p2X = Vector256.Create(p2.X);
-            var p2Y = Vector256.Create(p2.Y);
+            var p1X = Vector256.Create(aX);
+            var p1Y = Vector256.Create(aY);
+            var p2X = Vector256.Create(bX);
+            var p2Y = Vector256.Create(bY);
 
             var i = 0;
             fixed (float* pXs = points.Xs)
@@ -83,7 +93,7 @@ namespace ComputingTheConvexHullOnGpu.Aos
 
             for (; i < points.Xs.Length; i++)
             {
-                var distance = Distance(p1, p2, new Point(points.Xs[i], points.Ys[i]));
+                var distance = Distance(aX, aY, bX, bY, points.Xs[i], points.Ys[i]);
                 if (side > 0 && distance > maxDistance || side < 0 && distance < maxDistance)
                 {
                     maxIndex = i;
@@ -93,20 +103,18 @@ namespace ComputingTheConvexHullOnGpu.Aos
 
             if (maxIndex == -1) 
             { 
-                result.Add(p1); 
-                result.Add(p2); 
+                result.Add(new Point(aX, aY)); 
+                result.Add(new Point(bX, bY)); 
                 return;
             }
 
-            var maxIndexPoint = new Point(points.Xs[maxIndex], points.Ys[maxIndex]);
-            
-            FindHull(in points, maxIndexPoint, p1, -maxDistance, result); 
-            FindHull(in points, maxIndexPoint, p2, maxDistance, result);
+            FindHull(in points, points.Xs[maxIndex], points.Ys[maxIndex], aX, aY, -maxDistance, result); 
+            FindHull(in points, points.Xs[maxIndex], points.Ys[maxIndex], bX, bY, maxDistance, result);
         }
 
-        private static float Distance(Point p1, Point p2, Point p) 
-        { 
-            return (p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X);
+        private static float Distance(float aX, float aY, float bX, float bY, float pX, float pY)
+        {
+            return (pY - aY) * (bX - aX) - (bY - aY) * (pX - aX); 
         }
     }
 }
