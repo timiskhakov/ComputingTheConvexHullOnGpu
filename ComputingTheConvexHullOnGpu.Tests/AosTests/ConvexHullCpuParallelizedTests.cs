@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
+using ComputingTheConvexHullOnGpu.Aos;
 using ComputingTheConvexHullOnGpu.Models;
-using ComputingTheConvexHullOnGpu.Soa;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
+namespace ComputingTheConvexHullOnGpu.Tests.AosTests
 {
     [TestClass]
     public class ConvexHullCpuParallelizedTests
@@ -20,7 +20,7 @@ namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_NotEnoughPoints()
         {
-            ConvexHullCpuParallelized.QuickHull(Data.TwoSoaPoints);
+            ConvexHullCpuParallelized.QuickHull(Data.AosTwoPoints);
         }
 
         [DataTestMethod]
@@ -29,8 +29,8 @@ namespace ComputingTheConvexHullOnGpu.Tests.SoaTests
         [DataRow("2000-input.txt", "2000-expected.txt")]
         public void ReturnsPoints_EnoughPoints(string inputFile, string expectedFile)
         {
-            var input = Data.GetSoaPoints(inputFile).ToArray();
-            var expected = Data.GetSoaPoints(expectedFile).ToArray();
+            var input = Data.GetAosPoints(inputFile).ToArray();
+            var expected = Data.GetAosPoints(expectedFile).ToArray();
             
             CollectionAssert.AreEqual(expected, ConvexHullCpuParallelized.QuickHull(input).ToArray());
         }

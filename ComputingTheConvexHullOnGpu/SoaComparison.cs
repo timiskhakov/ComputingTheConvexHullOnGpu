@@ -1,7 +1,6 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
 using BenchmarkDotNet.Attributes;
-using ComputingTheConvexHullOnGpu.Models;
 using ComputingTheConvexHullOnGpu.Soa;
 
 namespace ComputingTheConvexHullOnGpu
@@ -9,38 +8,32 @@ namespace ComputingTheConvexHullOnGpu
     [MemoryDiagnoser]
     public class SoaComparison
     {
-        private Point[] _points;
-        
+        private Points _points;
+
         [GlobalSetup]
         public void Setup()
         {
             var file = Path.Combine(Directory.GetCurrentDirectory(), "Assets", "benchmark-points.txt");
             var lines = File.ReadAllLines(file);
-            
-            _points = new Point[lines.Length];
+
+            _points = new Points(lines.Length);
             for (var i = 0; i < lines.Length; i++)
             {
-                var parts = lines[i].Split(',');
-                _points[i] = new Point(
-                    float.Parse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture),
-                    float.Parse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture));
+                var line = lines[i];
+                var parts = line.Split(',');
+                _points.Xs[i] = float.Parse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture);
+                _points.Ys[i] = float.Parse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture);
             }
         }
         
         [Benchmark]
-        public void Baseline()
+        public void Intrinsics()
         {
-            ConvexHull.QuickHull(_points);
+            ConvexHullIntrinsics.QuickHull(_points);
         }
         
         [Benchmark]
-        public void CpuParallelized()
-        {
-            ConvexHullCpuParallelized.QuickHull(_points);
-        }
-
-        [Benchmark]
-        public void GpuParallelized()
+        public void Gpu()
         {
             ConvexHullGpuParallelized.QuickHull(_points);
         }

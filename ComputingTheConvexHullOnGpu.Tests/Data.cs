@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using ComputingTheConvexHullOnGpu.Aos;
 using ComputingTheConvexHullOnGpu.Models;
 using ComputingTheConvexHullOnGpu.Soa;
 
@@ -9,13 +8,13 @@ namespace ComputingTheConvexHullOnGpu.Tests
 {
     internal static class Data
     {
-        internal static readonly Point[] TwoSoaPoints =
+        internal static readonly Point[] AosTwoPoints =
         {
             new Point(6639.4673f, 5346.256f),
             new Point(2962.2266f, 8454.807f)
         };
 
-        internal static Points GetTwoAosPoints()
+        internal static Points GetSoaTwoPoints()
         {
             var points = new Points(2);
             points.Xs[0] = 6639.4673f;
@@ -26,7 +25,7 @@ namespace ComputingTheConvexHullOnGpu.Tests
             return points;
         }
 
-        internal static IEnumerable<Point> GetSoaPoints(string fileName)
+        internal static IEnumerable<Point> GetAosPoints(string fileName)
         {
             var file = Path.Combine(Directory.GetCurrentDirectory(), "Assets", fileName);
             var lines = File.ReadAllLines(file);
@@ -39,7 +38,7 @@ namespace ComputingTheConvexHullOnGpu.Tests
             }
         }
 
-        internal static Points GetAosPoints(string fileName)
+        internal static Points GetSoaPoints(string fileName)
         {
             var file = Path.Combine(Directory.GetCurrentDirectory(), "Assets", fileName);
             var lines = File.ReadAllLines(file);

@@ -1,4 +1,4 @@
-namespace ComputingTheConvexHullOnGpu.Aos
+namespace ComputingTheConvexHullOnGpu.Soa
 {
     public readonly struct Points
     {

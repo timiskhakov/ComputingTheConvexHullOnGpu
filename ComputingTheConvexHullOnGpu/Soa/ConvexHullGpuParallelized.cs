@@ -12,48 +12,63 @@ namespace ComputingTheConvexHullOnGpu.Soa
 {
     public static class ConvexHullGpuParallelized
     {
-        public static HashSet<Point> QuickHull(Point[] points)
+        public static HashSet<Point> QuickHull(Points points)
         {
-            if (points.Length <= 2) throw new ArgumentException($"Too little points: {points.Length}, expected 3 or more");
+            if (points.Xs.Length != points.Ys.Length) throw new ArgumentException($"Invalid {nameof(Points)} structure");
+            if (points.Xs.Length <= 2) throw new ArgumentException($"Too little points: {points.Xs.Length}, expected 3 or more");
 
             var result = new HashSet<Point>();
 
-            var left = points[0];
-            var right = points[0];
-            for (var i = 1; i < points.Length; i++)
+            var left = (points.Xs[0], points.Ys[0]);
+            var right = (points.Xs[0], points.Ys[0]);
+            for (var i = 0; i < points.Xs.Length; i++)
             {
-                if (points[i].X < left.X) left = points[i];
-                if (points[i].X > right.X) right = points[i];
+                if (points.Xs[i] < left.Item1)
+                {
+                    left.Item1 = points.Xs[i];
+                    left.Item2 = points.Ys[i];
+                }
+                if (points.Xs[i] > right.Item1)
+                {
+                    right.Item1 = points.Xs[i];
+                    right.Item2 = points.Ys[i];
+                }
             }
 
             using var context = new Context();
             context.EnableAlgorithms();
             
             using var accelerator = new CudaAccelerator(context);
-            using var buffer = accelerator.Allocate<Point>(points.Length);
-            buffer.CopyFrom(points, 0, 0, points.Length);
+            using var xsBuffer = accelerator.Allocate<float>(points.Xs.Length);
+            using var ysBuffer = accelerator.Allocate<float>(points.Ys.Length);
+            xsBuffer.CopyFrom(points.Xs, 0, 0, points.Xs.Length);
+            ysBuffer.CopyFrom(points.Ys, 0, 0, points.Ys.Length);
             
-            FindHull(points, left, right, 1, result, accelerator, buffer.View);
-            FindHull(points, left, right, -1, result, accelerator, buffer.View);
+            FindHull(in points, left.Item1, left.Item2, right.Item1, right.Item2, 1, result, accelerator, xsBuffer.View, ysBuffer.View);
+            FindHull(in points, left.Item1, left.Item2, right.Item1, right.Item2, -1, result, accelerator, xsBuffer.View, ysBuffer.View);
 
             return result;
         }
 
         private static void FindHull(
-            Point[] points,
-            Point p1,
-            Point p2,
+            in Points points,
+            float aX,
+            float aY,
+            float bX,
+            float bY,
             int side,
             HashSet<Point> result,
             Accelerator accelerator,
-            ArrayView<Point> view)
+            ArrayView<float> xsView,
+            ArrayView<float> ysView)
         {
-            var (gridDim, groupDim) = accelerator.ComputeGridStrideLoopExtent(points.Length, out _);
+            var (gridDim, groupDim) = accelerator.ComputeGridStrideLoopExtent(xsView.Length, out _);
             using var output = accelerator.Allocate<DataBlock<int, float>>(gridDim);
             
             var kernel = accelerator.LoadStreamKernel<
-                ArrayView<Point>, int, Point, Point, ArrayView<DataBlock<int, float>>>(FindMaxIndexKernel);
-            kernel(new KernelConfig(gridDim, groupDim), view, side, p1, p2, output);
+                ArrayView<float>, ArrayView<float>, int, float, float, float, float, ArrayView<DataBlock<int, float>>
+            >(FindMaxIndexKernel);
+            kernel(new KernelConfig(gridDim, groupDim), xsView, ysView, side, aX, aY, bX, bY, output);
             accelerator.Synchronize();
             
             var maxIndex = -1;
@@ -63,35 +78,38 @@ namespace ComputingTheConvexHullOnGpu.Soa
             foreach (var candidate in candidates)
             {
                 if (candidate.Item1 < 0) continue;
-                FindMaxIndex(p1, p2, points[candidate.Item1], side, candidate.Item1, ref maxIndex, ref maxDistance);
+                FindMaxIndex(aX, aY, bX, bY, points.Xs[candidate.Item1], points.Ys[candidate.Item1], side, candidate.Item1, ref maxIndex, ref maxDistance);
             }
 
             if (maxIndex < 0) 
             {
-                result.Add(p1); 
-                result.Add(p2); 
+                result.Add(new Point(aX, aY)); 
+                result.Add(new Point(bX, bY)); 
                 return;
             }
 
-            var newSide = Side(points[maxIndex], p1, p2);
-            FindHull(points, points[maxIndex], p1, -newSide, result, accelerator, view);
-            FindHull(points, points[maxIndex], p2, newSide, result, accelerator, view);
+            var newSide = Side(points.Xs[maxIndex], points.Ys[maxIndex], aX, aY, bX, bY);
+            FindHull(points, points.Xs[maxIndex], points.Ys[maxIndex], aX, aY, -newSide, result, accelerator, xsView, ysView);
+            FindHull(points, points.Xs[maxIndex], points.Ys[maxIndex], bX, bY, newSide, result, accelerator, xsView, ysView);
         }
 
         private static void FindMaxIndexKernel(
-            ArrayView<Point> input,
+            ArrayView<float> xsView,
+            ArrayView<float> ysView,
             int side,
-            Point a,
-            Point b,
+            float aX,
+            float aY,
+            float bX,
+            float bY,
             ArrayView<DataBlock<int, float>> output)
         {
             var stride = GridExtensions.GridStrideLoopStride;
             var index = -1;
             var distance = 0f;
 
-            for (var i = Grid.GlobalIndex.X; i < input.Length; i += stride)
+            for (var i = Grid.GlobalIndex.X; i < xsView.Length; i += stride)
             {
-                FindMaxIndex(a, b, input[i], side, i, ref index, ref distance);
+                FindMaxIndex(aX, aY, bX, bY, xsView[i], ysView[i], side, i, ref index, ref distance);
             }
             
             var maxGroupDistance = GroupExtensions.Reduce<float, MaxFloat>(distance);
@@ -109,34 +127,37 @@ namespace ComputingTheConvexHullOnGpu.Soa
         }
 
         private static void FindMaxIndex(
-            Point a,
-            Point b,
-            Point candidatePoint,
+            float aX,
+            float aY,
+            float bX,
+            float bY,
+            float candidateX,
+            float candidateY,
             int side,
             int candidateIndex,
             ref int maxIndex,
             ref float maxDistance)
         {
-            if (Side(a, b, candidatePoint) != side) return;
+            if (Side(aX, aY, bX, bY, candidateX, candidateY) != side) return;
             
-            var candidateDistance = Distance(a, b, candidatePoint);
+            var candidateDistance = Distance(aX, aY, bX, bY, candidateX, candidateY);
             if (candidateDistance <= maxDistance) return;
             
             maxIndex = candidateIndex;
             maxDistance = candidateDistance;
         }
         
-        private static int Side(Point p1, Point p2, Point p) 
+        private static int Side(float aX, float aY, float bX, float bY, float pX, float pY) 
         { 
-            var side = (p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X);
+            var side = (pY - aY) * (bX - aX) - (bY - aY) * (pX - aX);
             if (side > 0) return 1; 
             if (side < 0) return -1; 
             return 0; 
         }
         
-        private static float Distance(Point a, Point b, Point p)
+        private static float Distance(float aX, float aY, float bX, float bY, float pX, float pY)
         {
-            return IntrinsicMath.Abs((p.Y - a.Y) * (b.X - a.X) - (b.Y - a.Y) * (p.X - a.X)); 
+            return IntrinsicMath.Abs((pY - aY) * (bX - aX) - (bY - aY) * (pX - aX)); 
         }
     }
 }

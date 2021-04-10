@@ -4,7 +4,7 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using ComputingTheConvexHullOnGpu.Models;
 
-namespace ComputingTheConvexHullOnGpu.Aos
+namespace ComputingTheConvexHullOnGpu.Soa
 {
     public static class ConvexHullIntrinsics
     {
