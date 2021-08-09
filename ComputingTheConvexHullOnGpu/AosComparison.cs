@@ -9,7 +9,7 @@ namespace ComputingTheConvexHullOnGpu
     [MemoryDiagnoser]
     public class AosComparison
     {
-        private Point[] _points;
+        private Point[] _points = null!;
         
         [GlobalSetup]
         public void Setup()

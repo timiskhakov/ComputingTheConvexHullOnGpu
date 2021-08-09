@@ -13,7 +13,7 @@ namespace ComputingTheConvexHullOnGpu.Tests.AosTests
         [ExpectedException(typeof(ArgumentException))]
         public void ThrowsArgumentException_ZeroPoints()
         {
-            ConvexHullGpuParallelized.QuickHull(new Point[0]);
+            ConvexHullGpuParallelized.QuickHull(Array.Empty<Point>());
         }
         
         [TestMethod]
