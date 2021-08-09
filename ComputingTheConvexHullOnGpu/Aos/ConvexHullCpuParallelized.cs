@@ -27,7 +27,7 @@ namespace ComputingTheConvexHullOnGpu.Aos
             return result;
         }
 
-        private static readonly object Lock = new object();
+        private static readonly object Lock = new();
         private static void FindHull(Point[] points, Point p1, Point p2, int side, HashSet<Point> result)
         {
             var maxIndex = -1;

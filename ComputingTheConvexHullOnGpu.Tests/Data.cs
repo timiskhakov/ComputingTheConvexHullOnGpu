@@ -10,8 +10,8 @@ namespace ComputingTheConvexHullOnGpu.Tests
     {
         internal static readonly Point[] AosTwoPoints =
         {
-            new Point(6639.4673f, 5346.256f),
-            new Point(2962.2266f, 8454.807f)
+            new(6639.4673f, 5346.256f),
+            new(2962.2266f, 8454.807f)
         };
 
         internal static Points GetSoaTwoPoints()
