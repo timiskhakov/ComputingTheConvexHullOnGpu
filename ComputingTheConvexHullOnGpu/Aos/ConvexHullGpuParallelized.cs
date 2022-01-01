@@ -27,7 +27,7 @@ namespace ComputingTheConvexHullOnGpu.Aos
                 if (points[i].X > right.X) right = points[i];
             }
 
-            using var context = Context.Create().ToContext();                               
+            using var context = Context.Create(builder => builder.Default().EnableAlgorithms());
             using var accelerator = context.CreateCudaAccelerator(0);
             //using var accelerator = context.CreateCPUAccelerator(0);            
             using var buffer = accelerator.Allocate1D<Point>(points.Length);
