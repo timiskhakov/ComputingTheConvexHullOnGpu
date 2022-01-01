@@ -5,6 +5,7 @@ using ILGPU;
 using ILGPU.Algorithms;
 using ILGPU.Algorithms.ScanReduceOperations;
 using ILGPU.Runtime;
+using ILGPU.Runtime.CPU;
 using ILGPU.Runtime.Cuda;
 using ILGPU.Util;
 
@@ -26,12 +27,11 @@ namespace ComputingTheConvexHullOnGpu.Aos
                 if (points[i].X > right.X) right = points[i];
             }
 
-            using var context = new Context();
-            context.EnableAlgorithms();
-            
-            using var accelerator = new CudaAccelerator(context);
-            using var buffer = accelerator.Allocate<Point>(points.Length);
-            buffer.CopyFrom(points, 0, 0, points.Length);
+            using var context = Context.Create().ToContext();                               
+            using var accelerator = context.CreateCudaAccelerator(0);
+            //using var accelerator = context.CreateCPUAccelerator(0);            
+            using var buffer = accelerator.Allocate1D<Point>(points.Length);
+            buffer.CopyFromCPU(points);
             
             FindHull(points, left, right, 1, result, accelerator, buffer.View);
             FindHull(points, left, right, -1, result, accelerator, buffer.View);
@@ -49,17 +49,17 @@ namespace ComputingTheConvexHullOnGpu.Aos
             ArrayView<Point> view)
         {
             var (gridDim, groupDim) = accelerator.ComputeGridStrideLoopExtent(points.Length, out _);
-            using var output = accelerator.Allocate<DataBlock<int, float>>(gridDim);
+            using var output = accelerator.Allocate1D<DataBlock<int, float>>(gridDim);
             
             var kernel = accelerator.LoadStreamKernel<
                 ArrayView<Point>, int, Point, Point, ArrayView<DataBlock<int, float>>>(FindMaxIndexKernel);
-            kernel(new KernelConfig(gridDim, groupDim), view, side, p1, p2, output);
+            kernel(new KernelConfig(gridDim, groupDim), view, side, p1, p2, output.AsContiguous());
             accelerator.Synchronize();
             
             var maxIndex = -1;
             var maxDistance = 0f;
 
-            var candidates = output.GetAsArray();
+            var candidates = output.GetAsArray1D();
             foreach (var candidate in candidates)
             {
                 if (candidate.Item1 < 0) continue;
